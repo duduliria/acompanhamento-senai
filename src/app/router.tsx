@@ -16,6 +16,7 @@ export const appRouter = createBrowserRouter([
   { path: '/aluno', element: <AlunoPage /> },
   { path: '/monitor', element: <MonitorPage /> },
   { path: '/professor', element: <ProfessorPage /> },
+  { path: '/professor/relatorios', element: <ProfessorPage /> },
   { path: '/admin', element: <AdminPage /> },
   { path: '/tarefas', element: <TarefasPage /> },
   { path: '*', element: <NotFoundPage /> },

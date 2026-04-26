@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useProfessorRealtime } from '../hooks/useProfessorRealtime'
 import {
   definirTarefaAtual,
@@ -62,6 +63,7 @@ const statusLabels: Record<StudentStatus, string> = {
 }
 
 export default function ProfessorPage() {
+  const location = useLocation()
   const [alunos, setAlunos] = useState<ProfessorStudent[]>([])
   const [tarefas, setTarefas] = useState<TaskOption[]>([])
   const [turmas, setTurmas] = useState<TurmaOption[]>([])
@@ -246,6 +248,8 @@ export default function ProfessorPage() {
     [alunos],
   )
 
+  const currentView = location.pathname === '/professor/relatorios' ? 'relatorios' : 'dashboard'
+
   const etapaTitulo = useMemo(() => {
     if (!etapa.tarefa_id) return `${etapa.id} - ${etapa.titulo} - sem tarefa vinculada`
     const tarefaAtual = tarefas.find((tarefa) => Number(tarefa.id) === Number(etapa.tarefa_id))
@@ -294,6 +298,7 @@ export default function ProfessorPage() {
         etapaTitulo={etapaTitulo}
         tarefas={tarefas}
         tarefaSelecionada={tarefaSelecionada}
+        currentView={currentView}
         isSavingTask={isSavingTask}
         isSocketConnected={realtime.connected}
         alunosTotal={alunos.length}
@@ -319,55 +324,74 @@ export default function ProfessorPage() {
       ) : null}
 
       {allDoneVisible ? (
-        <div id="aviso-todos" className="mx-4 mt-4 rounded bg-[#27ae60] px-4 py-2 text-center text-base font-bold text-white md:mx-8">
+        <div id="aviso-todos" className="mx-4 mt-4 rounded-xl bg-[#27ae60] px-4 py-2 text-center text-base font-bold text-white md:mx-8">
           Todos os alunos presentes terminaram.
         </div>
       ) : null}
 
-      <PresenceColumns
-        listaPresenca={listaPresenca}
-        ajuda={ajuda}
-        atendimento={atendimento}
-        fazendo={fazendo}
-        terminou={terminou}
-      />
+      {currentView === 'dashboard' ? (
+        <>
+          <section className="px-4 pt-5 md:px-6">
+            <div className="rounded-2xl border border-white/10 bg-[#24313f] px-4 py-4 text-sm text-[#d5dde6] shadow-[0_14px_40px_rgba(0,0,0,0.18)]">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-white">Visao operacional da turma</h2>
+                  <p className="mt-1 text-sm text-[#9db0c3]">
+                    Mantivemos aqui apenas o acompanhamento dos cards do kanban para a leitura ficar mais limpa.
+                  </p>
+                </div>
 
-      <div className="px-4 md:px-6">
-        <button
-          id="btn-set-timeout"
-          type="button"
-          onClick={() => setShowTimeoutModal(true)}
-          className="w-full rounded-lg bg-[#2c3e64] px-4 py-2 text-sm font-semibold text-[#efefef] transition hover:bg-[#2c5264]"
-        >
-          Definir tempo de timeout
-        </button>
-      </div>
+                <button
+                  id="btn-set-timeout"
+                  type="button"
+                  onClick={() => setShowTimeoutModal(true)}
+                  className="rounded-xl bg-[#2c5264] px-4 py-2 text-sm font-semibold text-[#efefef] transition hover:bg-[#356882]"
+                >
+                  Definir tempo de timeout
+                </button>
+              </div>
+            </div>
+          </section>
 
-      <DashboardStatus
-        statsAlunos={statsAlunos}
-        statsMonitores={statsMonitores}
-        mediasMonitores={mediasMonitores}
-        mediasAlunos={mediasAlunos}
-        estrelasPorMedia={estrelasPorMedia}
-      />
+          <PresenceColumns
+            listaPresenca={listaPresenca}
+            ajuda={ajuda}
+            atendimento={atendimento}
+            fazendo={fazendo}
+            terminou={terminou}
+          />
+        </>
+      ) : (
+        <section className="px-4 py-6 md:px-6">
+          <div className="space-y-6">
+            <DashboardStatus
+              statsAlunos={statsAlunos}
+              statsMonitores={statsMonitores}
+              mediasMonitores={mediasMonitores}
+              mediasAlunos={mediasAlunos}
+              estrelasPorMedia={estrelasPorMedia}
+            />
 
-      <HistoricoList
-        historico={historico}
-        resumoStatus={resumoStatus}
-        historicoStatus={historicoStatus}
-        statusLabels={statusLabels}
-        formatarData={formatarData}
-      />
+            <RelatoriosPanel
+              turmas={turmas}
+              tarefas={tarefas}
+              filtroTurma={filtroTurma}
+              filtroTarefa={filtroTarefa}
+              relatorio={relatorio}
+              onFiltroTurmaChange={setFiltroTurma}
+              onFiltroTarefaChange={setFiltroTarefa}
+            />
 
-      <RelatoriosPanel
-        turmas={turmas}
-        tarefas={tarefas}
-        filtroTurma={filtroTurma}
-        filtroTarefa={filtroTarefa}
-        relatorio={relatorio}
-        onFiltroTurmaChange={setFiltroTurma}
-        onFiltroTarefaChange={setFiltroTarefa}
-      />
+            <HistoricoList
+              historico={historico}
+              resumoStatus={resumoStatus}
+              historicoStatus={historicoStatus}
+              statusLabels={statusLabels}
+              formatarData={formatarData}
+            />
+          </div>
+        </section>
+      )}
 
       <TimeoutModal
         open={showTimeoutModal}

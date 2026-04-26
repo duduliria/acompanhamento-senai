@@ -13,7 +13,7 @@ type HistoricoListProps = {
 }
 
 function cardTitleStyle(color: string) {
-	return `border-b border-white/10 pb-2 text-sm font-semibold uppercase tracking-wide ${color}`
+	return `text-sm font-semibold uppercase tracking-[0.18em] ${color}`
 }
 
 export default function HistoricoList({
@@ -24,17 +24,20 @@ export default function HistoricoList({
 	formatarData,
 }: HistoricoListProps) {
 	return (
-		<>
-			<section className="mx-4 mb-6 rounded-lg border-t-4 border-t-[#3498db] bg-[#2c3e50] p-4 md:mx-6">
+		<div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+			<section className="rounded-2xl border border-white/10 bg-[#24313f] p-5">
 				<h3 className={cardTitleStyle('text-[#ecf0f1]')}>Historico de atendimentos</h3>
-				<ul id="historico-lista" className="mt-3 max-h-96 space-y-2 overflow-y-auto">
+				<ul id="historico-lista" className="mt-4 max-h-[34rem] space-y-3 overflow-y-auto pr-1">
 					{historico.length === 0 ? (
-						<li className="text-sm italic text-[#7f8c8d]">
+						<li className="rounded-xl border border-dashed border-white/10 px-4 py-4 text-sm italic text-[#7f8c8d]">
 							Nenhum atendimento finalizado ainda
 						</li>
 					) : (
 						[...historico].reverse().map((item) => (
-							<li key={item.id} className="rounded border-l-4 border-l-[#3498db] bg-white/8 p-3">
+							<li
+								key={item.id}
+								className="rounded-xl border border-white/8 bg-[linear-gradient(135deg,rgba(52,152,219,0.14),rgba(255,255,255,0.04))] p-4"
+							>
 								<div className="flex flex-wrap items-center justify-between gap-1 text-sm font-semibold text-[#ecf0f1]">
 									<span>
 										{item.aluno} &lt;- {item.monitor}
@@ -68,12 +71,12 @@ export default function HistoricoList({
 				</ul>
 			</section>
 
-			<section className="mx-4 mb-6 rounded-lg border-t-4 border-t-[#3498db] bg-[#2c3e50] p-4 md:mx-6">
+			<section className="rounded-2xl border border-white/10 bg-[#24313f] p-5">
 				<h3 className={cardTitleStyle('text-[#ecf0f1]')}>Historico de status da tarefa atual</h3>
 
-				<ul id="resumo-status-tarefa" className="mt-3 space-y-2">
+				<ul id="resumo-status-tarefa" className="mt-4 grid gap-2 sm:grid-cols-2">
 					{Object.entries(resumoStatus).map(([status, total]) => (
-						<li key={status} className="rounded bg-white/8 px-3 py-2 text-sm">
+						<li key={status} className="rounded-xl border border-white/8 bg-white/5 px-3 py-3 text-sm">
 							{statusLabels[status as StudentStatus]}: {total}
 						</li>
 					))}
@@ -81,17 +84,17 @@ export default function HistoricoList({
 
 				<ul
 					id="historico-status-tarefa"
-					className="mt-4 max-h-96 space-y-2 overflow-y-auto"
+					className="mt-4 max-h-[28rem] space-y-3 overflow-y-auto pr-1"
 				>
 					{historicoStatus.length === 0 ? (
-						<li className="text-sm italic text-[#7f8c8d]">
+						<li className="rounded-xl border border-dashed border-white/10 px-4 py-4 text-sm italic text-[#7f8c8d]">
 							Nenhuma movimentacao de status registrada
 						</li>
 					) : (
 						historicoStatus.slice(0, 80).map((item) => (
 							<li
 								key={item.id}
-								className="rounded border-l-4 border-l-[#3498db] bg-white/8 p-3 text-sm"
+								className="rounded-xl border border-white/8 bg-white/5 p-4 text-sm"
 							>
 								<div className="flex flex-wrap items-center justify-between gap-1">
 									<span className="font-semibold">
@@ -107,7 +110,6 @@ export default function HistoricoList({
 					)}
 				</ul>
 			</section>
-		</>
+		</div>
 	)
 }
-
