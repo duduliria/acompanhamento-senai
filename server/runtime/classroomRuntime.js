@@ -27,6 +27,31 @@ function createClassroomRuntime({ db, io }) {
     return alunos.find((a) => a.matricula === matricula);
   }
 
+  async function sincronizarAlunoDaBase(identificador) {
+    if (!identificador) return null;
+
+    const alunoDb =
+      (await db.buscarAlunoPorMatricula(identificador)) ||
+      (await db.buscarAlunoPorNome(identificador));
+
+    if (!alunoDb) return null;
+
+    const alunoMemoria = upsertStudentInMemory({
+      socketId: buscarAlunoPorMatricula(alunoDb.matricula)?.socketId || null,
+      matricula: alunoDb.matricula,
+      nome: alunoDb.nome,
+      senha: alunoDb.senha,
+      perfil: alunoDb.perfil,
+      turma_id: alunoDb.turma_id || null,
+      primeiro_acesso: Boolean(alunoDb.primeiro_acesso),
+      status: alunoDb.status || "ausente",
+      isMonitor: alunoDb.perfil === "Monitor",
+      progresso: alunoDb.progresso || {},
+    });
+
+    return alunoMemoria;
+  }
+
   function obterHistoricoDaTarefaAtual() {
     if (!etapaAtual.tarefa_id) return [];
     return historico.filter(
@@ -585,7 +610,11 @@ function createClassroomRuntime({ db, io }) {
         const nomeLimpo = nome.trim();
         if (!nomeLimpo) return;
 
-        const alunoObj = buscarAlunoPorNome(nomeLimpo);
+        let alunoObj = buscarAlunoPorNome(nomeLimpo);
+        if (!alunoObj || !alunoObj.isMonitor) {
+          alunoObj = await sincronizarAlunoDaBase(nomeLimpo);
+        }
+
         if (!alunoObj || !alunoObj.isMonitor) {
           socket.emit("naoAutorizadoMonitor");
           return;

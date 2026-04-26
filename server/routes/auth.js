@@ -1,6 +1,10 @@
 const express = require("express");
 const { sendError, StatusCodes } = require("./shared");
 
+function isStrongPassword(password) {
+  return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/.test(password);
+}
+
 function createAuthRouter({ db, runtime, generateAccessToken }) {
   const router = express.Router();
 
@@ -73,6 +77,21 @@ function createAuthRouter({ db, runtime, generateAccessToken }) {
         });
       }
 
+      if (nova_senha === senha_atual) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          status: StatusCodes.BAD_REQUEST,
+          error: "A nova senha nao pode ser igual a senha anterior",
+        });
+      }
+
+      if (!isStrongPassword(nova_senha)) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          status: StatusCodes.BAD_REQUEST,
+          error:
+            "A nova senha deve ter pelo menos 8 caracteres, com letra maiuscula, letra minuscula, numero e caractere especial",
+        });
+      }
+
       if (tabela === "alunos") {
         await db.atualizarSenhaAluno(matricula, nova_senha);
       } else {
@@ -84,7 +103,13 @@ function createAuthRouter({ db, runtime, generateAccessToken }) {
         nome: usuario.nome,
         perfil: usuario.perfil,
       });
-      res.json({ success: true, token });
+      res.json({
+        matricula: usuario.matricula,
+        nome: usuario.nome,
+        perfil: usuario.perfil,
+        primeiro_acesso: false,
+        token,
+      });
     } catch (error) {
       sendError(res, error);
     }

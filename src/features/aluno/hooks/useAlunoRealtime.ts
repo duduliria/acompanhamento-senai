@@ -5,6 +5,7 @@ import type {
 	EtapaAtualizadaPayload,
 	QueuePositionPayload,
 } from '../../../shared/types/aluno.types'
+import type { FilaAjudaResumoPayload } from '../../../shared/types/monitor.types'
 
 type Handlers = {
 	onRegistrado: (payload: { nome: string; status: string }) => void
@@ -15,6 +16,7 @@ type Handlers = {
 	onNaoAutorizado: () => void
 	onAvaliacaoMonitor: (payload: AvaliarMonitorPayload) => void
 	onPosicaoNaFila: (payload: QueuePositionPayload) => void
+	onFilaAtualizada: (payload: FilaAjudaResumoPayload) => void
 	onEtapaAtualizada: (payload: EtapaAtualizadaPayload) => void
 	onEstadoContador: (payload: { tempoFinal: number | null }) => void
 	onConnect: () => void
@@ -71,6 +73,10 @@ export function useAlunoRealtime(handlers: Handlers) {
 			handlersRef.current.onPosicaoNaFila(payload)
 		}
 
+		const onFilaAtualizada = (payload: FilaAjudaResumoPayload) => {
+			handlersRef.current.onFilaAtualizada(payload)
+		}
+
 		const onEtapaAtualizada = (payload: EtapaAtualizadaPayload) => {
 			handlersRef.current.onEtapaAtualizada(payload)
 		}
@@ -89,6 +95,7 @@ export function useAlunoRealtime(handlers: Handlers) {
 		socket.on('naoAutorizado', onNaoAutorizado)
 		socket.on('avaliarMonitor', onAvaliacaoMonitor)
 		socket.on('posicaoNaFila', onPosicaoNaFila)
+		socket.on('filaAtualizada', onFilaAtualizada)
 		socket.on('etapaAtualizada', onEtapaAtualizada)
 		socket.on('estadoContador', onEstadoContador)
 
@@ -103,6 +110,7 @@ export function useAlunoRealtime(handlers: Handlers) {
 			socket.off('naoAutorizado', onNaoAutorizado)
 			socket.off('avaliarMonitor', onAvaliacaoMonitor)
 			socket.off('posicaoNaFila', onPosicaoNaFila)
+			socket.off('filaAtualizada', onFilaAtualizada)
 			socket.off('etapaAtualizada', onEtapaAtualizada)
 			socket.off('estadoContador', onEstadoContador)
 		}

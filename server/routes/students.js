@@ -219,13 +219,31 @@ function createStudentsRouter({ db, runtime }) {
         }
       }
 
-      runtime.updateStudentInMemory(matricula, {
+      const alunoAtualizadoMemoria = runtime.updateStudentInMemory(matricula, {
         nome: nome || alunoExistente.nome,
         senha: senha || alunoExistente.senha,
         perfil: perfil || alunoExistente.perfil,
         turma_id: novaTurmaId,
         isMonitor: (perfil || alunoExistente.perfil) === "Monitor",
       });
+
+      if (!alunoAtualizadoMemoria) {
+        runtime.upsertStudentInMemory({
+          socketId: null,
+          matricula,
+          nome: nome || alunoExistente.nome,
+          senha: senha || alunoExistente.senha,
+          perfil: perfil || alunoExistente.perfil,
+          turma_id: novaTurmaId,
+          primeiro_acesso: Boolean(alunoExistente.primeiro_acesso),
+          status: alunoExistente.status || "ausente",
+          isMonitor: (perfil || alunoExistente.perfil) === "Monitor",
+          progresso: alunoExistente.progresso || {},
+        });
+      }
+
+      await runtime.syncProfessor();
+      await runtime.syncMonitors();
 
       res.json({ matricula, nome, perfil, turma_id: novaTurmaId });
     } catch (error) {

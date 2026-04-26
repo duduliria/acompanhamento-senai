@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { login, trocarSenha, validarSessao } from '../../../shared/api/auth-api'
 import { clearAuthToken, getAuthToken, setAuthToken } from '../../../shared/lib/token'
+import {
+  getStrongPasswordMessage,
+  isStrongPassword,
+} from '../../../shared/lib/password-policy'
 import type { AuthUser } from '../../../shared/types/auth.types'
 import ChangePasswordForm from '../components/ChangePasswordForm'
 import LoginForm from '../components/LoginForm'
@@ -11,7 +15,7 @@ type MessageType = 'error' | 'success' | 'info'
 type ViewMode = 'login' | 'change-password'
 
 function routeByRole(perfil?: string) {
-  if (perfil === 'Monitor') return '/monitor'
+  if (perfil === 'Monitor') return '/tarefas'
   if (perfil === 'Professor') return '/admin'
   return '/tarefas'
 }
@@ -60,6 +64,14 @@ export default function LoginPage() {
         }
 
         setSession(parsedUser, token)
+        if (parsedUser.primeiro_acesso) {
+          setCurrentUser(parsedUser)
+          setMode('change-password')
+          setSenhaAtualInicial('')
+          showMessage('Primeiro acesso detectado. Defina uma nova senha para continuar.', 'info')
+          return
+        }
+
         navigate(routeByRole(parsedUser.perfil), { replace: true })
       } catch {
         clearSession()
@@ -112,8 +124,8 @@ export default function LoginPage() {
       return
     }
 
-    if (values.novaSenha.length < 6) {
-      showMessage('A nova senha deve ter no minimo 6 caracteres')
+    if (values.novaSenha === values.senhaAtual) {
+      showMessage('A nova senha nao pode ser igual a senha provisoria/anterior')
       return
     }
 
@@ -122,8 +134,8 @@ export default function LoginPage() {
       return
     }
 
-    if (values.novaSenha === values.senhaAtual) {
-      showMessage('A nova senha deve ser diferente da senha atual')
+    if (!isStrongPassword(values.novaSenha)) {
+      showMessage(getStrongPasswordMessage())
       return
     }
 
@@ -136,6 +148,7 @@ export default function LoginPage() {
 
       const mergedUser = { ...currentUser, ...response }
       setSession(mergedUser, response.token)
+      setCurrentUser(mergedUser)
 
       showMessage('Senha alterada com sucesso! Redirecionando...', 'success')
       window.setTimeout(() => {

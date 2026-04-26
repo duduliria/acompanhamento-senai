@@ -23,6 +23,10 @@ async function readJsonOrThrow<T>(response: Response, fallbackError: string): Pr
 		throw new Error(payload.error ?? fallbackError)
 	}
 
+	if (response.status === 204) {
+		return null as T
+	}
+
 	return response.json() as Promise<T>
 }
 

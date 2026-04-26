@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 
 type AlunoStatusCardProps = {
 	nome: string
+	roleLabel: string
 	etapaTitulo: string
 	statusTexto: string
 	statusClassName: string
@@ -12,6 +13,7 @@ type AlunoStatusCardProps = {
 
 export default function AlunoStatusCard({
 	nome,
+	roleLabel,
 	etapaTitulo,
 	statusTexto,
 	statusClassName,
@@ -20,14 +22,23 @@ export default function AlunoStatusCard({
 	children,
 }: AlunoStatusCardProps) {
 	return (
-		<div className="w-full max-w-105 rounded-xl bg-white px-10 py-8 text-center text-[#333] shadow-[0_4px_20px_rgba(0,0,0,0.1)]">
-			<p className="mb-1 text-xl text-[#555]">
+		<div className="w-full max-w-[34rem] rounded-[28px] bg-white px-6 py-7 text-center text-[#333] shadow-[0_18px_45px_rgba(15,23,42,0.12)] sm:px-10 sm:py-8">
+			<p className="text-[0.78rem] font-semibold uppercase tracking-[0.28em] text-[#64748b]">
+				{roleLabel}
+			</p>
+			<p className="mb-1 mt-2 text-xl text-[#555] sm:text-2xl">
 				Ola, <strong id="exibir-nome">{nome}</strong>
 			</p>
+			<p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[#64748b]">
+				Acompanhe sua etapa atual, atualize seu status e, se voce tambem for monitor, assuma
+				atendimentos sem sair deste fluxo.
+			</p>
 
-			<div className="mb-4 flex items-center justify-center gap-2 rounded-lg bg-[#2c3e50] px-4 py-2 text-[0.95rem] text-[#ecf0f1]">
+			<div className="mb-4 mt-5 flex items-center justify-center gap-2 rounded-xl bg-[#2c3e50] px-4 py-3 text-[0.95rem] text-[#ecf0f1]">
 				<span className="text-sm text-[#95a5a6]">Etapa atual:</span>
-				<span id="etapa-titulo-aluno">{etapaTitulo}</span>
+				<span id="etapa-titulo-aluno" className="font-medium">
+					{etapaTitulo}
+				</span>
 			</div>
 
 			<p id="status-atual" className={statusClassName}>

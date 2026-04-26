@@ -1,9 +1,16 @@
 import { useMemo } from 'react'
 import type { AlunoStatus, TarefaStatus } from '../../../shared/types/aluno.types'
 
-export function useAlunoActions(status: AlunoStatus, tarefaStatus: TarefaStatus | null) {
+export function useAlunoActions(
+	status: AlunoStatus,
+	tarefaStatus: TarefaStatus | null,
+	tarefaAtualId: number | null,
+) {
 	return useMemo(() => {
-		const tarefaEmAndamento = tarefaStatus === 'em_andamento'
+		const tarefaAtiva = Boolean(tarefaAtualId)
+		const tarefaEmAndamento =
+			tarefaStatus === 'em_andamento' ||
+			(tarefaAtiva && (tarefaStatus === null || tarefaStatus === 'nao_iniciada'))
 		const timeoutActive = status === 'em_timeout'
 		const ajudaBloqueada =
 			status === 'aguardando_ajuda' ||
@@ -15,7 +22,9 @@ export function useAlunoActions(status: AlunoStatus, tarefaStatus: TarefaStatus 
 			timeoutActive,
 			canHelp: tarefaEmAndamento && !ajudaBloqueada,
 			canFinish: tarefaEmAndamento && status !== 'terminou' && !timeoutActive,
+			canResume: tarefaEmAndamento && status !== 'fazendo' && !timeoutActive,
+			canLeaveTask: !timeoutActive,
 			showQueue: status === 'aguardando_ajuda',
 		}
-	}, [status, tarefaStatus])
+	}, [status, tarefaAtualId, tarefaStatus])
 }

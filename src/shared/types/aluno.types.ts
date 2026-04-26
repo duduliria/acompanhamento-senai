@@ -15,6 +15,7 @@ export type TarefaStatus =
 export interface AlunoSessionUser {
 	matricula: string
 	nome: string
+	perfil?: string
 }
 
 export interface EtapaAtualizadaPayload {

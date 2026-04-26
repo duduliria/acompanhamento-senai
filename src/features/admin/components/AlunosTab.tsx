@@ -83,13 +83,19 @@ export default function AlunosTab({ alunos, turmas, reload }: Props) {
 
 	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault()
+
+		if (!turmaId) {
+			showMessage('Selecione uma turma para cadastrar ou atualizar o aluno', 'error')
+			return
+		}
+
 		try {
 			if (editing) {
 				await adminService.updateAluno(matricula, {
 					nome,
 					senha,
 					perfil,
-					turma_id: turmaId ? Number(turmaId) : null,
+					turma_id: Number(turmaId),
 				})
 				showMessage('Aluno atualizado com sucesso!')
 			} else {
@@ -98,7 +104,7 @@ export default function AlunosTab({ alunos, turmas, reload }: Props) {
 					nome,
 					senha,
 					perfil,
-					turma_id: turmaId ? Number(turmaId) : null,
+					turma_id: Number(turmaId),
 				})
 				showMessage('Aluno criado com sucesso!')
 			}
@@ -217,16 +223,20 @@ export default function AlunosTab({ alunos, turmas, reload }: Props) {
 				return
 			}
 
-			let turmaNumero: number | null = null
-			if (turmaRaw) {
-				const parsed = Number.parseInt(turmaRaw, 10)
-				if (!Number.isFinite(parsed) || parsed <= 0) {
-					showMessage(`Linha ${i + 1}: turma_id invalida`, 'error')
-					event.target.value = ''
-					return
-				}
-				turmaNumero = parsed
+			if (!turmaRaw) {
+				showMessage(`Linha ${i + 1}: turma_id e obrigatoria para cadastrar aluno`, 'error')
+				event.target.value = ''
+				return
 			}
+
+			const parsed = Number.parseInt(turmaRaw, 10)
+			if (!Number.isFinite(parsed) || parsed <= 0) {
+				showMessage(`Linha ${i + 1}: turma_id invalida`, 'error')
+				event.target.value = ''
+				return
+			}
+
+			const turmaNumero = parsed
 
 			alunosParaCriar.push({
 				matricula: mat,
@@ -317,15 +327,17 @@ export default function AlunosTab({ alunos, turmas, reload }: Props) {
 					<select
 						value={turmaId}
 						onChange={(event) => setTurmaId(event.target.value)}
+						required
 						className="w-full rounded border border-slate-500 bg-slate-800 px-3 py-2 text-sm text-slate-100"
 					>
-						<option value="">Nenhuma</option>
+						<option value="">Selecione uma turma</option>
 						{turmas.map((turma) => (
 							<option key={turma.id} value={turma.id}>
 								{turma.nome}
 							</option>
 						))}
 					</select>
+					<p className="mt-1 text-xs text-slate-400">Todo aluno precisa estar vinculado a uma turma.</p>
 				</div>
 
 				<div className="md:col-span-5">

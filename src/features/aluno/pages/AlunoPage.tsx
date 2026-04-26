@@ -6,7 +6,7 @@ import AvaliacaoMonitorModal from '../components/AvaliacaoMonitorModal'
 import BloqueioModal from '../components/BloqueioModal'
 import { useAlunoActions } from '../hooks/useAlunoActions'
 import { useAlunoRealtime } from '../hooks/useAlunoRealtime'
-import { sincronizarConclusaoTarefa } from '../services/aluno-service'
+import { carregarEtapaAtualAluno, sincronizarConclusaoTarefa } from '../services/aluno-service'
 import type {
   AlunoSessionUser,
   AlunoStatus,
@@ -15,6 +15,7 @@ import type {
   SyncMessage,
   TarefaStatus,
 } from '../../../shared/types/aluno.types'
+import type { FilaAjudaResumoPayload } from '../../../shared/types/monitor.types'
 
 const STATUS_LABELS: Record<AlunoStatus, string> = {
   fazendo: 'Status: Fazendo',
@@ -54,11 +55,13 @@ function getCurrentUser() {
 
 export default function AlunoPage() {
   const navigate = useNavigate()
+  const [user] = useState<AlunoSessionUser | null>(() => getCurrentUser())
   const [nome, setNome] = useState(() => getCurrentUser()?.nome || '')
-  const [status, setStatus] = useState<AlunoStatus>('fazendo')
+  const [status, setStatus] = useState<AlunoStatus>('desconectado')
   const [etapaTitulo, setEtapaTitulo] = useState('carregando...')
   const [syncMessage, setSyncMessage] = useState<SyncMessage | null>(null)
   const [queueMessage, setQueueMessage] = useState<string | null>(null)
+  const [helpRequestsCount, setHelpRequestsCount] = useState(0)
   const [showBloqueio, setShowBloqueio] = useState(false)
   const [bloqueioInfo, setBloqueioInfo] = useState<BloqueioInfo>(BLOQUEIO_PADRAO)
 
@@ -79,12 +82,36 @@ export default function AlunoPage() {
   const statusEfetivo = useMemo<AlunoStatus>(() => {
     return timeoutAtivo ? 'em_timeout' : status
   }, [status, timeoutAtivo])
+  const isMonitor = user?.perfil === 'Monitor'
 
-  const actions = useAlunoActions(statusEfetivo, tarefaAtualStatus)
+  const actions = useAlunoActions(statusEfetivo, tarefaAtualStatus, tarefaAtualId)
 
   useEffect(() => {
     statusRef.current = status
   }, [status])
+
+  useEffect(() => {
+    async function carregarEtapaInicial() {
+      try {
+        const etapaAtual = await carregarEtapaAtualAluno()
+        setEtapaTitulo(`${etapaAtual.id} - ${etapaAtual.titulo}`)
+        setTarefaAtualId(etapaAtual.tarefa_id || null)
+        setTarefaAtualStatus((prev) =>
+          etapaAtual.tarefa_id ? prev ?? 'em_andamento' : null,
+        )
+
+        if (etapaAtual.tarefa_id) {
+          sessionStorage.setItem('acomp_tarefa_ativa', String(etapaAtual.tarefa_id))
+        } else {
+          sessionStorage.removeItem('acomp_tarefa_ativa')
+        }
+      } catch {
+        setEtapaTitulo('etapa indisponivel')
+      }
+    }
+
+    void carregarEtapaInicial()
+  }, [])
 
   const showSyncMessage = useCallback((message: SyncMessage, timeoutMs: number) => {
     setSyncMessage(message)
@@ -99,10 +126,14 @@ export default function AlunoPage() {
       },
       onPresencaMarcada: () => {
         setStatus('fazendo')
+        setQueueMessage(null)
       },
       onStatusAtualizado: ({ status: nextStatus }: { status: string }) => {
         if (!nextStatus) return
         setStatus(nextStatus as AlunoStatus)
+        if (nextStatus !== 'aguardando_ajuda') {
+          setQueueMessage(null)
+        }
       },
       onOutraMaquina: () => {
         setBloqueioInfo({
@@ -138,6 +169,12 @@ export default function AlunoPage() {
       onPosicaoNaFila: ({ posicao, total }: { posicao: number; total: number }) => {
         setQueueMessage(`Voce esta na posicao ${posicao} de ${total} na fila`)
       },
+      onFilaAtualizada: ({ filaAjuda, atendimentos }: FilaAjudaResumoPayload) => {
+        const alunosEmAtendimento = new Set(atendimentos.map((item) => item.nomeAluno))
+        setHelpRequestsCount(
+          filaAjuda.filter((aluno) => !alunosEmAtendimento.has(aluno.nome)).length,
+        )
+      },
       onEtapaAtualizada: ({
         id,
         titulo,
@@ -146,7 +183,7 @@ export default function AlunoPage() {
       }: EtapaAtualizadaPayload) => {
         setEtapaTitulo(`${id} - ${titulo}`)
         setTarefaAtualId(tarefa_id || null)
-        setTarefaAtualStatus(tarefa_status || null)
+        setTarefaAtualStatus(tarefa_id ? tarefa_status || 'em_andamento' : null)
 
         if (tarefa_id) {
           sessionStorage.setItem('acomp_tarefa_ativa', String(tarefa_id))
@@ -297,6 +334,10 @@ export default function AlunoPage() {
     navigate('/tarefas')
   }
 
+  function handleIrParaMonitor() {
+    navigate('/monitor')
+  }
+
   function handleEnviarAvaliacao() {
     if (!avaliacaoId || !notaSelecionada) return
     realtime.submeterAvaliacao(avaliacaoId, notaSelecionada)
@@ -309,6 +350,7 @@ export default function AlunoPage() {
     () => STATUS_LABELS[statusEfetivo] || statusEfetivo,
     [statusEfetivo],
   )
+  const statusTextoCurto = useMemo(() => statusTexto.replace(/^Status:\s*/i, ''), [statusTexto])
   const statusClassName = useMemo(
     () => STATUS_CLASS[statusEfetivo] || STATUS_CLASS.fazendo,
     [statusEfetivo],
@@ -325,6 +367,7 @@ export default function AlunoPage() {
       <section id="tela-principal" className="flex min-h-screen items-center justify-center">
         <AlunoStatusCard
           nome={nome}
+          roleLabel={isMonitor ? 'Aluno e monitor' : 'Aluno'}
           etapaTitulo={etapaTitulo}
           statusTexto={statusTexto}
           statusClassName={statusClassName}
@@ -334,11 +377,17 @@ export default function AlunoPage() {
           <AlunoActions
             canHelp={actions.canHelp}
             canFinish={actions.canFinish}
+            canResume={actions.canResume}
+            canLeaveTask={actions.canLeaveTask}
+            isMonitor={isMonitor}
+            helpRequestsCount={helpRequestsCount}
             timeoutActive={actions.timeoutActive}
+            currentStatusLabel={statusTextoCurto}
             onTerminei={handleTerminei}
             onAjuda={handleAjuda}
             onFazendo={handleFazendo}
             onSairTarefa={handleSairTarefa}
+            onIrParaMonitor={handleIrParaMonitor}
           />
 
           <p className="mt-4 text-xs text-[#7f8c8d]">

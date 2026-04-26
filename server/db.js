@@ -66,23 +66,37 @@ async function createDatabaseIfNeeded() {
     multipleStatements: true,
   });
 
+  const [existingSchemas] = await connection.query(
+    "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?",
+    [config.database],
+  );
+  const databaseAlreadyExists = Array.isArray(existingSchemas) && existingSchemas.length > 0;
+
   await connection.query(
     `CREATE DATABASE IF NOT EXISTS \`${config.database}\` CHARACTER SET utf8 COLLATE utf8_general_ci`,
   );
   await connection.end();
+
+  return !databaseAlreadyExists;
 }
 
-async function ensureSchema() {
+async function ensureSchema(seedDatabase) {
   const schemaPath = path.join(__dirname, "mysql-schema.sql");
   const schemaSql = fs.readFileSync(schemaPath, "utf8");
-  await pool.query(schemaSql.replace(/acompanhamento_lab/g, config.database));
+  const marker = "\n-- Carga real extraida do SQLite";
+  const safeSchemaSql = schemaSql.includes(marker)
+    ? schemaSql.slice(0, schemaSql.indexOf(marker))
+    : schemaSql;
+
+  const sqlToRun = seedDatabase ? schemaSql : safeSchemaSql;
+  await pool.query(sqlToRun.replace(/acompanhamento_lab/g, config.database));
 }
 
 async function init() {
   if (pool) return;
-  await createDatabaseIfNeeded();
+  const seedDatabase = await createDatabaseIfNeeded();
   pool = mysql.createPool(config);
-  await ensureSchema();
+  await ensureSchema(seedDatabase);
 }
 
 async function close() {

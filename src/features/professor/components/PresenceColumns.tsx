@@ -6,7 +6,6 @@ type PresenceColumnsProps = {
   atendimento: ProfessorStudent[]
   fazendo: ProfessorStudent[]
   terminou: ProfessorStudent[]
-  onAlternarMonitor: (nome: string) => void
 }
 
 function cardTitleStyle(color: string) {
@@ -19,7 +18,6 @@ export default function PresenceColumns({
   atendimento,
   fazendo,
   terminou,
-  onAlternarMonitor,
 }: PresenceColumnsProps) {
   return (
     <section className="grid gap-4 px-4 py-6 md:px-6 xl:grid-cols-5">
@@ -49,18 +47,6 @@ export default function PresenceColumns({
                   >
                     {alunoItem.status === 'ausente' ? 'Ausente' : 'Presente'}
                   </span>
-
-                  <button
-                    type="button"
-                    onClick={() => onAlternarMonitor(alunoItem.nome)}
-                    className={`rounded px-2 py-1 text-[11px] font-semibold ${
-                      alunoItem.isMonitor
-                        ? 'bg-[#27ae60] text-white'
-                        : 'bg-[#95a5a6] text-white'
-                    }`}
-                  >
-                    {alunoItem.isMonitor ? 'Monitor' : '+ Monitor'}
-                  </button>
                 </div>
               </li>
             ))

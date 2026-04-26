@@ -12,7 +12,6 @@ type ProfessorHeaderProps = {
   totalPresentes: number
   onChangeTarefaSelecionada: (value: string) => void
   onDefinirTarefaAtual: () => void
-  onAbrirCadastro: () => void
 }
 
 export default function ProfessorHeader({
@@ -26,7 +25,6 @@ export default function ProfessorHeader({
   totalPresentes,
   onChangeTarefaSelecionada,
   onDefinirTarefaAtual,
-  onAbrirCadastro,
 }: ProfessorHeaderProps) {
   return (
     <header className="flex flex-wrap items-center justify-between gap-3 bg-[#2c3e50] px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.4)] md:px-8">
@@ -62,14 +60,6 @@ export default function ProfessorHeader({
           className="rounded bg-[#3498db] px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Definir tarefa atual
-        </button>
-
-        <button
-          type="button"
-          onClick={onAbrirCadastro}
-          className="rounded bg-[#27ae60] px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90"
-        >
-          Cadastrar alunos
         </button>
 
         <span id="total-alunos" className="text-[#bdc3c7]">

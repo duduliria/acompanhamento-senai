@@ -19,7 +19,6 @@ import type {
   TaskStatusHistoryItem,
   TurmaOption,
 } from '../../../shared/types/professor.types'
-import CadastroModal from '../components/CadastroModal'
 import DashboardStatus from '../components/DashboardStatus'
 import HistoricoList from '../components/HistoricoList'
 import PresenceColumns from '../components/PresenceColumns'
@@ -82,8 +81,6 @@ export default function ProfessorPage() {
   const [filtroTurma, setFiltroTurma] = useState('')
   const [filtroTarefa, setFiltroTarefa] = useState('')
 
-  const [showCadastroModal, setShowCadastroModal] = useState(false)
-  const [nomesCadastro, setNomesCadastro] = useState('')
   const [showTimeoutModal, setShowTimeoutModal] = useState(false)
   const [timeoutSegundos, setTimeoutSegundos] = useState('')
   const [allDoneVisible, setAllDoneVisible] = useState(false)
@@ -277,23 +274,6 @@ export default function ProfessorPage() {
     }
   }
 
-  function handleCadastrarAlunos() {
-    const nomes = nomesCadastro
-      .split('\n')
-      .map((item) => item.trim())
-      .filter(Boolean)
-
-    if (nomes.length === 0) {
-      setFlash({ type: 'info', text: 'Digite ao menos um nome para cadastrar' })
-      return
-    }
-
-    realtime.cadastrarAlunos(nomes)
-    setNomesCadastro('')
-    setShowCadastroModal(false)
-    setFlash({ type: 'success', text: 'Solicitacao de cadastro enviada' })
-  }
-
   function handleDefinirTimeout() {
     const segundos = Number(timeoutSegundos)
     if (!Number.isFinite(segundos) || segundos < 1) {
@@ -322,7 +302,6 @@ export default function ProfessorPage() {
         onDefinirTarefaAtual={() => {
           void handleDefinirTarefaAtual()
         }}
-        onAbrirCadastro={() => setShowCadastroModal(true)}
       />
 
       {flash ? (
@@ -351,7 +330,6 @@ export default function ProfessorPage() {
         atendimento={atendimento}
         fazendo={fazendo}
         terminou={terminou}
-        onAlternarMonitor={realtime.alternarMonitor}
       />
 
       <div className="px-4 md:px-6">
@@ -389,14 +367,6 @@ export default function ProfessorPage() {
         relatorio={relatorio}
         onFiltroTurmaChange={setFiltroTurma}
         onFiltroTarefaChange={setFiltroTarefa}
-      />
-
-      <CadastroModal
-        open={showCadastroModal}
-        nomes={nomesCadastro}
-        onChangeNomes={setNomesCadastro}
-        onClose={() => setShowCadastroModal(false)}
-        onConfirm={handleCadastrarAlunos}
       />
 
       <TimeoutModal

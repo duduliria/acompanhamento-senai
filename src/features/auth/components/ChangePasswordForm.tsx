@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { getStrongPasswordMessage } from '../../../shared/lib/password-policy'
 
 type ChangePasswordFormProps = {
 	senhaAtualInicial?: string
@@ -56,10 +57,10 @@ export default function ChangePasswordForm({
 					value={novaSenha}
 					onChange={(event) => setNovaSenha(event.target.value)}
 					required
-					minLength={6}
+					minLength={8}
 					className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none ring-blue-500/30 transition focus:border-blue-500 focus:ring-4"
 				/>
-				<p className="mt-1 text-xs text-slate-500">Minimo 6 caracteres</p>
+				<p className="mt-1 text-xs leading-5 text-slate-500">{getStrongPasswordMessage()}</p>
 			</div>
 
 			<div>
@@ -75,7 +76,7 @@ export default function ChangePasswordForm({
 					value={confirmarSenha}
 					onChange={(event) => setConfirmarSenha(event.target.value)}
 					required
-					minLength={6}
+					minLength={8}
 					className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none ring-blue-500/30 transition focus:border-blue-500 focus:ring-4"
 				/>
 			</div>
