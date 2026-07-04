@@ -47,6 +47,7 @@ app.use(
     db,
     runtime,
     generateAccessToken,
+    authenticateToken,
   }),
 );
 

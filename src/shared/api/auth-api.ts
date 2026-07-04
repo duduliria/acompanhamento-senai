@@ -35,6 +35,12 @@ export async function trocarSenha(
 }
 
 export async function validarSessao() {
-	const response = await apiGet('/api/etapa/atual')
+	const response = await apiGet('/api/sessao')
 	return response.ok
+}
+
+export async function obterSessao(): Promise<AuthUser | null> {
+	const response = await apiGet('/api/sessao')
+	if (!response.ok) return null
+	return response.json() as Promise<AuthUser>
 }

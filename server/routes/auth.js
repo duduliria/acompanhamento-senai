@@ -5,8 +5,16 @@ function isStrongPassword(password) {
   return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/.test(password);
 }
 
-function createAuthRouter({ db, runtime, generateAccessToken }) {
+function createAuthRouter({ db, runtime, generateAccessToken, authenticateToken }) {
   const router = express.Router();
+
+  router.get("/sessao", authenticateToken, (req, res) => {
+    res.json({
+      matricula: req.user.matricula,
+      nome: req.user.nome,
+      perfil: req.user.perfil,
+    });
+  });
 
   router.post("/login", async (req, res) => {
     try {

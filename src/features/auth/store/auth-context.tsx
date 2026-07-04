@@ -1,5 +1,6 @@
 import {
 	createContext,
+	useCallback,
 	useMemo,
 	useState,
 	type PropsWithChildren,
@@ -27,24 +28,24 @@ export function AuthProvider({ children }: PropsWithChildren) {
 		}
 	})
 
-	const value = useMemo<AuthContextValue>(
-		() => ({
-			user,
-			setSession(nextUser, token) {
-				if (token) {
-					setAuthToken(token)
-				}
+	const setSession = useCallback((nextUser: AuthUser, token?: string) => {
+		if (token) {
+			setAuthToken(token)
+		}
 
-				localStorage.setItem('currentUser', JSON.stringify(nextUser))
-				sessionStorage.setItem('acomp_nome_autofill', nextUser.nome ?? '')
-				setUser(nextUser)
-			},
-			clearSession() {
-				clearAuthToken()
-				setUser(null)
-			},
-		}),
-		[user],
+		localStorage.setItem('currentUser', JSON.stringify(nextUser))
+		sessionStorage.setItem('acomp_nome_autofill', nextUser.nome ?? '')
+		setUser(nextUser)
+	}, [])
+
+	const clearSession = useCallback(() => {
+		clearAuthToken()
+		setUser(null)
+	}, [])
+
+	const value = useMemo<AuthContextValue>(
+		() => ({ user, setSession, clearSession }),
+		[user, setSession, clearSession],
 	)
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
